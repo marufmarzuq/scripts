@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bouncing Ball</title>
+    <style>
+      body {
+        margin: 0;
+        border: 20px solid rgb(255, 255, 255);
+        overflow: hidden;
+      }
+      #canvas {
+        height: calc(100vh - 40px);
+        width: calc(100vw - 40px);
+        background-color: hotpink;
+      }
+      #ball {
+        height: 80px;
+        width: 80px;
+        border-radius: 100%;
+        background-color: white;
+        position: fixed;
+        box-shadow: inset 0px 0px 14px 0px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvas">
+      <div id="ball"></div>
+    </div>
+    <script>
+      const ball = document.getElementById("ball");
+      const canvas = document.getElementById("canvas");
+      const canvasHeight = canvas.clientHeight;
+      const canvasWidth = canvas.clientWidth;
+      console.log({ canvasWidth });
+      const ballHeight = ball.clientHeight;
+      const ballWidth = ball.clientWidth;
+      let ballY = canvasHeight / 2;
+      let ballX = canvasWidth / 2;
+      let cursorX = 0;
+      let cursorY = 0;
+      let ballSpeedX = 5;
+      let ballSpeedY = 5;
+      let acceleration = 2;
+
+      function updateBallPosition() {
+        ballY += ballSpeedY * acceleration;
+        ballX += ballSpeedX * acceleration;
+        ball.style.top = ballY + "px";
+        ball.style.left = ballX + "px";
+        acceleration -= 0.0000005;
+      }
+
+      function checkCollision() {
+        if (ballY <= 20 || ballY + ballHeight / 2 >= canvasHeight - 20) {
+          ballSpeedY *= -1;
+          acceleration -= 0.2;
+        }
+        if (ballX <= 20 || ballX + ballWidth / 2 >= canvasWidth - 20) {
+          ballSpeedX *= -1;
+          acceleration -= 0.2;
+        }
+      }
+
+      function gameLoop() {
+        updateBallPosition();
+        checkCollision();
+        if (acceleration <= 0) {
+          window.cancelAnimationFrame(gameLoop);
+        } else {
+          window.requestAnimationFrame(gameLoop);
+        }
+      }
+
+      gameLoop();
+
+      function moveBall() {
+        ballY = cursorY;
+        ballX = cursorX;
+        ball.style.top = ballY + "px";
+        ball.style.left = ballX + "px";
+      }
+
+      addEventListener("click", () => {
+        console.log("clicked on", event.clientX, event.clientY);
+        cursorX = event.clientX - ballWidth / 2;
+        cursorY = event.clientY - ballHeight / 2;
+        moveBall();
+      });
+    </script>
+  </body>
+</html>
