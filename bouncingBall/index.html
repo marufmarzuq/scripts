@@ -7,88 +7,129 @@
     <style>
       body {
         margin: 0;
-        border: 20px solid rgb(255, 255, 255);
+        border: 20px solid blueviolet;
         border-image: url("bricks.png") 8% round;
         overflow: hidden;
       }
       #canvas {
         height: calc(100vh - 40px);
         width: calc(100vw - 40px);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: JetBrains Mono, monospace;
       }
       #ball {
         height: 44px;
         width: 44px;
         border-radius: 100%;
-        position: relative;
+        position: absolute;
         box-shadow: inset 0px 0px 14px 0px rgba(0, 0, 0, 0.5);
         background-image: url("tennis-ball.webp");
         background-size: 46px 46px;
+      }
+      #instructions {
+        position: absolute;
+        color: #00000058;
+        font-size: 24px;
+        text-align: center;
+        user-select: none;
+        line-height: 32px;
       }
     </style>
   </head>
   <body>
     <div id="canvas">
       <div id="ball"></div>
+      <div id="instructions">
+        Press and drag the mouse to <br />launch the ball!
+      </div>
     </div>
     <script>
       const ball = document.getElementById("ball");
       const canvas = document.getElementById("canvas");
+      const instructions = document.getElementById("instructions");
       const canvasHeight = canvas.clientHeight;
       const canvasWidth = canvas.clientWidth;
       const ballHeight = ball.clientHeight;
       const ballWidth = ball.clientWidth;
-      let ballY = canvasHeight / 2;
-      let ballX = canvasWidth / 2;
-      let cursor = { x: 0, y: 0 };
-      let speed = 5;
-      let acceleration = 0.2;
-      let maxSpeed = 10;
-      let friction = 0.05;
 
-      let ballSpeedX = 5;
-      let ballSpeedY = 5;
+      let isMousePressed = false;
+      let startX = 0;
+      let startY = 0;
+      let endX = 0;
+      let endY = 0;
+      let ballX = canvasWidth / 2;
+      let ballY = canvasHeight / 2;
+      let speed = 0;
+      let angle = 0;
+      let friction = 0.01;
 
       function updateBallPosition() {
-        ballY += ballSpeedY * acceleration;
-        ballX += ballSpeedX * acceleration;
+        ballX += speed * Math.cos(angle);
+        ballY += speed * Math.sin(angle);
+
+        speed *= 1 - friction;
+
+        if (ballY <= 0 || ballY + ballHeight >= canvasHeight) {
+          angle = -angle;
+        }
+        if (ballX <= 0 || ballX + ballWidth >= canvasWidth) {
+          angle = Math.PI - angle;
+        }
+
         ball.style.top = ballY + "px";
         ball.style.left = ballX + "px";
-        acceleration -= 0.0000005;
-      }
 
-      function checkCollision() {
-        if (ballY <= 0 || ballY + ballHeight / 2 >= canvasHeight - 20) {
-          ballSpeedY *= -1;
-          acceleration -= 0.2;
-        }
-        if (ballX <= 0 || ballX + ballWidth / 2 >= canvasWidth - 20) {
-          ballSpeedX *= -1;
-          acceleration -= 0.2;
-        }
-      }
-
-      function gameLoop() {
-        updateBallPosition();
-        checkCollision();
-        if (acceleration <= 0) {
-          window.cancelAnimationFrame(gameLoop);
+        // resetting screen
+        if (speed < 0.5) {
+          speed = 0;
+          setTimeout(() => {
+            instructions.style.display = "block";
+          }, 500);
         } else {
-          window.requestAnimationFrame(gameLoop);
+          requestAnimationFrame(updateBallPosition);
         }
       }
 
-      gameLoop();
+      canvas.addEventListener("mousedown", (e) => {
+        isMousePressed = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        instructions.style.display = "none";
+        ball.style.display = "none";
+      });
 
-      function moveBall() {
-        ballY = cursor.y;
-        ballX = cursor.x;
-        ball.style.top = ballY + "px";
-        ball.style.left = ballX + "px";
-      }
+      canvas.addEventListener("mousemove", (e) => {
+        if (isMousePressed) {
+          endX = e.clientX;
+          endY = e.clientY;
+        }
+      });
 
-      addEventListener("click", () => {
-        cursor = { x: event.clientX, y: event.clientY };
-        moveBall();
+      canvas.addEventListener("mouseup", (e) => {
+        if (isMousePressed) {
+          isMousePressed = false;
+          endX = e.clientX;
+          endY = e.clientY;
+
+          const distanceX = endX - startX;
+          const distanceY = endY - startY;
+
+          speed =
+            Math.sqrt(distanceX * distanceX + distanceY * distanceY) * 0.1;
+          angle = Math.atan2(distanceY, distanceX);
+
+          ballX = startX - ballWidth / 2 - 20;
+          ballY = startY - ballHeight / 2 - 20;
+
+          ball.style.display = "block";
+          ball.style.top = ballY + "px";
+          ball.style.left = ballX + "px";
+
+          updateBallPosition();
+        }
       });
     </script>
   </body>
